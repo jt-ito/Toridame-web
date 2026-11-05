@@ -1,74 +1,66 @@
-<h1 align="center">Jellyfin Web</h1>
-<h3 align="center">Part of the <a href="https://jellyfin.org">Jellyfin Project</a></h3>
+# Toridame Web
 
----
+The web client for **Toridame**, a personal fork of [Jellyfin](https://github.com/jellyfin/jellyfin-web) based on **Jellyfin web 12.4**. It is not affiliated with or endorsed by the Jellyfin project.
 
-<p align="center">
-<img alt="Logo Banner" src="https://raw.githubusercontent.com/jellyfin/jellyfin-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>
-<br/>
-<br/>
-<a href="https://github.com/jellyfin/jellyfin-web">
-<img alt="GPL 2.0 License" src="https://img.shields.io/github/license/jellyfin/jellyfin-web.svg"/>
-</a>
-<a href="https://github.com/jellyfin/jellyfin-web/releases">
-<img alt="Current Release" src="https://img.shields.io/github/release/jellyfin/jellyfin-web.svg"/>
-</a>
-<a href="https://translate.jellyfin.org/projects/jellyfin/jellyfin-web/?utm_source=widget">
-<img src="https://translate.jellyfin.org/widgets/jellyfin/-/jellyfin-web/svg-badge.svg" alt="Translation Status"/>
-</a>
-<br/>
-<a href="https://opencollective.com/jellyfin">
-<img alt="Donate" src="https://img.shields.io/opencollective/all/jellyfin.svg?label=backers"/>
-</a>
-<a href="https://features.jellyfin.org">
-<img alt="Feature Requests" src="https://img.shields.io/badge/fider-vote%20on%20features-success.svg"/>
-</a>
-<a href="https://matrix.to/#/+jellyfin:matrix.org">
-<img alt="Chat on Matrix" src="https://img.shields.io/matrix/jellyfin:matrix.org.svg?logo=matrix"/>
-</a>
-<a href="https://www.reddit.com/r/jellyfin">
-<img alt="Join our Subreddit" src="https://img.shields.io/badge/reddit-r%2Fjellyfin-%23FF5700.svg"/>
-</a>
-</p>
+It is meant to be used with the [Toridame](https://github.com/jt-ito/Toridame) server. Some features here need the server's changes (the watch history controls and the dashboard options).
 
-Jellyfin Web is the frontend used for most of the clients available for end users, such as desktop browsers, Android, and iOS. We welcome all contributions and pull requests! If you have a larger feature in mind please open an issue so we can discuss the implementation before you start. Translations can be improved very easily from our <a href="https://translate.jellyfin.org/projects/jellyfin/jellyfin-web">Weblate</a> instance. Look through the following graphic to see if your native language could use some work!
+## What's different from stock Jellyfin web 12.4
 
-<a href="https://translate.jellyfin.org/engage/jellyfin/?utm_source=widget">
-<img src="https://translate.jellyfin.org/widgets/jellyfin/-/jellyfin-web/multi-auto.svg" alt="Detailed Translation Status"/>
-</a>
+**In the player**
+- Skip buttons combine rapid presses into one seek, and show a running "+30 seconds" / "−10 seconds" indicator: a pill in the video player, and a short text beside the time in the now-playing bar and on the remote control page.
+- A stalled stream is restarted, and play recovers after the app has been in the background for a long time.
+- The next button is greyed out when there is no next item (player, now-playing bar and remote control).
+- A built-in **episode list** that floats over the player instead of taking the screen: season chips, an expandable preview per episode, play, played and favorite buttons, a version switcher, and optional spoiler blur. It can coexist with the InPlayerEpisodePreview plugin, and it can be turned off entirely. Its other options are under Settings → Playback.
+- The modern layout's player header keeps long titles on one line with an ellipsis.
 
-## Build Process
+**Watch history** (needs the Toridame server)
+- Settings → Playback → **Watch history**: don't save my watch history, clear Continue Watching, clear all watch history.
+- **Remove from Continue Watching** for a single item: in the three-dots menu on a video, and in the multi-select menu you get from a long-press on a card.
 
-### Dependencies
+**Home and settings**
+- Hide a library from the home page without removing access to it.
+- A toggle to sync display settings across devices.
+- Dashboard → Libraries → Display has the server options for post-scan subtitle extraction and the broken-stream warning (both off by default).
+- A guard for the dashboard crash caused by `r.map is not a function`.
 
-- [Node.js](https://nodejs.org/en/download)
-- npm (included in Node.js)
+## Building
 
-### Getting Started
+Requires Node.js 24 or newer and npm 11 or newer.
 
-1. Clone or download this repository.
+```bash
+npm ci
+```
 
-   ```sh
-   git clone https://github.com/jellyfin/jellyfin-web.git
-   cd jellyfin-web
-   ```
+```bash
+npm run build:production
+```
 
-2. Install build dependencies in the project directory.
+The result is in `dist/`. Other useful commands:
 
-   ```sh
-   npm install
-   ```
+```bash
+npm run lint
+```
 
-3. Run the web client with webpack for local development.
+```bash
+npm run build:check
+```
 
-   ```sh
-   npm start
-   ```
+```bash
+npm test
+```
 
-4. Build the client with sourcemaps available.
+```bash
+npm start
+```
 
-   ```sh
-   npm run build:development
-   ```
+## Using it with the server
 
-Review the [Contributing Guide](./CONTRIBUTING.md) for more information on our process and tech stack.
+Copy or point the server at the `dist` folder, for example as a `jellyfin-web` folder next to the server executable, or with the server's `--webdir` option.
+
+## Staying close to upstream
+
+The history starts from an unmodified Jellyfin web 12.4 snapshot, followed by this fork's changes, so `git diff` between the first two commits shows exactly what changed. The original repository is available as the `upstream` remote. The history is not shared with upstream's, so moving to a newer release means re-applying these changes rather than a plain merge.
+
+## License
+
+GPL-2.0, as for Jellyfin. See [LICENSE](LICENSE). Jellyfin is a trademark of its respective owners.
