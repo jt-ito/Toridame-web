@@ -67,6 +67,16 @@ export async function getCommands(options) {
         }
     }
 
+    // A resume point is what keeps an item in Continue Watching; the item stays played or unplayed as it was.
+    // Always offered for videos, since the item the menu was opened on may not carry its resume point.
+    if (canPlay && item.MediaType === 'Video') {
+        commands.push({
+            name: globalize.translate('RemoveFromContinueWatching'),
+            id: 'removeFromContinueWatching',
+            icon: 'visibility_off'
+        });
+    }
+
     if (playbackManager.getCurrentPlayer() !== null) {
         if (options.stopPlayback) {
             commands.push({
@@ -552,6 +562,14 @@ function executeCommand(item, id, options) {
             case 'resume':
                 play(item, true);
                 getResolveFunction(resolve, id)();
+                break;
+            case 'removeFromContinueWatching':
+                apiClient.ajax({
+                    type: 'POST',
+                    url: apiClient.getUrl(`UserItems/${itemId}/UserData`, { userId: apiClient.getCurrentUserId() }),
+                    data: JSON.stringify({ PlaybackPositionTicks: 0 }),
+                    contentType: 'application/json'
+                }).then(getResolveFunction(resolve, id, true), getResolveFunction(resolve, id));
                 break;
             case 'queue':
                 play(item, false, true);

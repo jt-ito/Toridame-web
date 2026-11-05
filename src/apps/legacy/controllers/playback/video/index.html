@@ -5,6 +5,7 @@
             <span class="secondary-icon material-icons play" aria-hidden="true"></span>
         </div>
     </div>
+    <div class="osdSkipIndicator" aria-live="polite"></div>
     <div class="upNextContainer hide"></div>
     <div class="videoOsdBottom videoOsdBottom-maincontrols">
         <div class="osdControls">
@@ -70,6 +71,9 @@
                     <span class="xlargePaperIconButton material-icons favorite" aria-hidden="true"></span>
                 </button>
 
+                <button is="paper-icon-button-light" class="btnEpisodeList hide autoSize" title="${Episodes} / ${Collections}">
+                    <span class="xlargePaperIconButton material-icons view_list" aria-hidden="true"></span>
+                </button>
                 <button is="paper-icon-button-light" class="btnSubtitles hide autoSize" title="${Subtitles}">
                     <span class="xlargePaperIconButton material-icons closed_caption" aria-hidden="true"></span>
                 </button>

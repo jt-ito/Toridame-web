@@ -14,6 +14,21 @@ const DISPLAY_PREFERENCES_ID = 'usersettings';
 // TODO: We should really update the client ID at some point
 const CLIENT_ID = 'emby';
 
+// Settings that stay on the device, unless the account has "sync across devices" turned on, in which case they
+// follow the account. Left out on purpose: whatever depends on what the device can play or show (audio channels,
+// fMP4, segment length, blur hashes, fade-in, page size, screensaver, subtitle appearance).
+const SYNC_ACROSS_DEVICES = 'syncAcrossDevices';
+const SYNCED_DEVICE_SETTINGS = [
+    'enableCinemaMode', 'selectAudioNormalization', 'enableNextVideoInfoOverlay', 'enableVideoRemainingTime',
+    'enableThemeSongs', 'enableThemeVideos', 'enableBackdrops', 'disableCustomCss', 'customCss', 'detailsBanner',
+    'language', 'datetimelocale', 'skin', 'appTheme', 'soundeffects', 'stillWatchingPrompt', 'maxDaysForNextUp',
+    'enableRewatchingInNextUp'
+];
+const SYNCED_PREFIX = 'episodeList-';
+
+const isSyncableSetting = name => SYNCED_DEVICE_SETTINGS.includes(name) || name.startsWith(SYNCED_PREFIX);
+const getSyncedKey = name => `synced-${name}`;
+
 function onSaveTimeout() {
     const self = this;
     self.saveTimeout = null;
@@ -110,6 +125,9 @@ export class UserSettings {
         if (enableOnServer !== false && this.displayPrefs) {
             this.displayPrefs.CustomPrefs[name] = value == null ? value : value.toString();
             saveServerPreferences(this);
+        } else if (this.isSynced(name)) {
+            this.displayPrefs.CustomPrefs[getSyncedKey(name)] = value == null ? value : value.toString();
+            saveServerPreferences(this);
         }
 
         if (currentValue !== value) {
@@ -117,6 +135,53 @@ export class UserSettings {
         }
 
         return result;
+    }
+
+    /**
+     * Whether device settings follow the account rather than staying on this device.
+     * @return {boolean} Whether syncing across devices is on.
+     */
+    isSyncingAcrossDevices() {
+        return toBoolean(this.displayPrefs?.CustomPrefs[SYNC_ACROSS_DEVICES], false);
+    }
+
+    /**
+     * Whether a device setting currently follows the account.
+     * @param {string} name - Name of setting.
+     * @return {boolean} Whether the setting is synced.
+     */
+    isSynced(name) {
+        return this.isSyncingAcrossDevices() && isSyncableSetting(name);
+    }
+
+    /**
+     * Get or set whether device settings follow the account. Turning it on makes this device's values the account's.
+     * @param {boolean} [val] - Flag to sync across devices or undefined.
+     * @return {boolean} Whether syncing across devices is on.
+     */
+    syncAcrossDevices(val) {
+        if (val === undefined) {
+            return this.isSyncingAcrossDevices();
+        }
+
+        const wasSyncing = this.isSyncingAcrossDevices();
+        this.set(SYNC_ACROSS_DEVICES, val.toString());
+
+        if (val && !wasSyncing && this.displayPrefs) {
+            const prefix = `${this.currentUserId}-`;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const name = key?.startsWith(prefix) ? key.slice(prefix.length) : null;
+
+                if (name && isSyncableSetting(name)) {
+                    this.displayPrefs.CustomPrefs[getSyncedKey(name)] = localStorage.getItem(key);
+                }
+            }
+
+            saveServerPreferences(this);
+        }
+
+        return val;
     }
 
     /**
@@ -129,6 +194,13 @@ export class UserSettings {
         const userId = this.currentUserId;
         if (enableOnServer !== false && this.displayPrefs) {
             return this.displayPrefs.CustomPrefs[name];
+        }
+
+        if (this.isSynced(name)) {
+            const syncedValue = this.displayPrefs.CustomPrefs[getSyncedKey(name)];
+            if (syncedValue != null) {
+                return syncedValue;
+            }
         }
 
         return appSettings.get(name, userId);
@@ -390,6 +462,19 @@ export class UserSettings {
         }
 
         return this.get('datetimelocale', false);
+    }
+
+    /**
+     * Get or set the libraries whose tile is left out of the home screen's library row.
+     * @param {string[]} [val] - Library ids, or undefined to read them.
+     * @return {string[]} Library ids.
+     */
+    homeHiddenLibraries(val) {
+        if (val !== undefined) {
+            return this.set('homeHiddenLibraries', val.join(','));
+        }
+
+        return (this.get('homeHiddenLibraries') || '').split(',').filter(Boolean);
     }
 
     /**
@@ -741,6 +826,8 @@ export const detailsBanner = currentSettings.detailsBanner.bind(currentSettings)
 export const useEpisodeImagesInNextUpAndResume = currentSettings.useEpisodeImagesInNextUpAndResume.bind(currentSettings);
 export const language = currentSettings.language.bind(currentSettings);
 export const dateTimeLocale = currentSettings.dateTimeLocale.bind(currentSettings);
+export const homeHiddenLibraries = currentSettings.homeHiddenLibraries.bind(currentSettings);
+export const syncAcrossDevices = currentSettings.syncAcrossDevices.bind(currentSettings);
 export const skipBackLength = currentSettings.skipBackLength.bind(currentSettings);
 export const skipForwardLength = currentSettings.skipForwardLength.bind(currentSettings);
 export const dashboardTheme = currentSettings.dashboardTheme.bind(currentSettings);

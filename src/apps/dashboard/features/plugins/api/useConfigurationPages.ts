@@ -15,6 +15,13 @@ const fetchConfigurationPages = async (
 ) => {
     const response = await getPluginApi(api)
         .getConfigurationPages(params, options);
+
+    // This route lives under /web/, so a proxy or CDN serving the web client can answer it with a page
+    // instead of JSON. Callers map over the result, and that would take down the whole dashboard.
+    if (!Array.isArray(response.data)) {
+        throw new Error('Unexpected response from /web/ConfigurationPages, expected a list of pages');
+    }
+
     return response.data;
 };
 

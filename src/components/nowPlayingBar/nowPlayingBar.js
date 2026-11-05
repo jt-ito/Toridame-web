@@ -10,6 +10,7 @@ import browser from '../../scripts/browser';
 import imageLoader from '../images/imageLoader';
 import layoutManager from '../layoutManager';
 import { playbackManager } from '../playback/playbackmanager';
+import { createSkipFlash } from '../playback/skipFlash';
 import { appHost } from '../apphost';
 import dom from '../../utils/dom';
 import globalize from 'lib/globalize';
@@ -25,6 +26,7 @@ let currentPlayer;
 let currentPlayerSupportedCommands = [];
 
 let currentTimeElement;
+let skipFlash;
 let nowPlayingImageElement;
 let nowPlayingImageUrl;
 let nowPlayingTextElement;
@@ -37,6 +39,7 @@ let positionSlider;
 let toggleAirPlayButton;
 let toggleRepeatButton;
 let toggleRepeatButtonIcon;
+let nextTrackButton;
 let lyricButton;
 
 let lastUpdateTime = 0;
@@ -76,6 +79,7 @@ function getNowPlayingBarHtml() {
     }
 
     html += '<div class="nowPlayingBarCurrentTime"></div>';
+    html += '<div class="nowPlayingBarSkipFlash"></div>';
     html += '</div>';
 
     html += '<div class="nowPlayingBarRight">';
@@ -145,6 +149,7 @@ function onPlayPauseClick() {
 
 function bindEvents(elem) {
     currentTimeElement = elem.querySelector('.nowPlayingBarCurrentTime');
+    skipFlash = createSkipFlash(elem.querySelector('.nowPlayingBarSkipFlash'));
     nowPlayingImageElement = elem.querySelector('.nowPlayingImage');
     nowPlayingTextElement = elem.querySelector('.nowPlayingBarText');
     nowPlayingUserData = elem.querySelector('.nowPlayingBarUserDataButtons');
@@ -172,7 +177,8 @@ function bindEvents(elem) {
         button.addEventListener('click', onPlayPauseClick);
     });
 
-    elem.querySelector('.nextTrackButton').addEventListener('click', function () {
+    nextTrackButton = elem.querySelector('.nextTrackButton');
+    nextTrackButton.addEventListener('click', function () {
         if (currentPlayer) {
             playbackManager.nextTrack(currentPlayer);
         }
@@ -356,6 +362,7 @@ function updatePlayerStateInternal(event, state, player) {
     toggleAirPlayButton.classList.toggle('hide', hideAirPlayButton);
 
     updateRepeatModeDisplay(playbackManager.getRepeatMode());
+    updateNextTrackState(player);
     onQueueShuffleModeChange();
 
     updatePlayerVolumeState(playState.IsMuted, playState.VolumeLevel);
@@ -373,6 +380,12 @@ function updatePlayerStateInternal(event, state, player) {
 
     updateNowPlayingInfo(state);
     updateLyricButton(nowPlayingItem);
+}
+
+function updateNextTrackState(player) {
+    if (nextTrackButton) {
+        nextTrackButton.disabled = !playbackManager.hasNextItem(player);
+    }
 }
 
 function updateRepeatModeDisplay(repeatMode) {
@@ -565,6 +578,15 @@ function onRepeatModeChange() {
     }
 
     updateRepeatModeDisplay(playbackManager.getRepeatMode());
+    updateNextTrackState(this);
+}
+
+function onPlaylistChange() {
+    if (!isEnabled) {
+        return;
+    }
+
+    updateNextTrackState(this);
 }
 
 function onQueueShuffleModeChange() {
@@ -687,6 +709,8 @@ function releaseCurrentPlayer() {
         Events.off(player, 'playbackstart', onPlaybackStart);
         Events.off(player, 'statechange', onPlaybackStart);
         Events.off(player, 'repeatmodechange', onRepeatModeChange);
+        Events.off(player, 'playlistitemadd', onPlaylistChange);
+        Events.off(player, 'playlistitemremove', onPlaylistChange);
         Events.off(player, 'shufflequeuemodechange', onQueueShuffleModeChange);
         Events.off(player, 'playbackstop', onPlaybackStopped);
         Events.off(player, 'volumechange', onVolumeChanged);
@@ -734,6 +758,8 @@ function bindToPlayer(player) {
     Events.on(player, 'playbackstart', onPlaybackStart);
     Events.on(player, 'statechange', onPlaybackStart);
     Events.on(player, 'repeatmodechange', onRepeatModeChange);
+    Events.on(player, 'playlistitemadd', onPlaylistChange);
+    Events.on(player, 'playlistitemremove', onPlaylistChange);
     Events.on(player, 'shufflequeuemodechange', onQueueShuffleModeChange);
     Events.on(player, 'playbackstop', onPlaybackStopped);
     Events.on(player, 'volumechange', onVolumeChanged);
@@ -745,6 +771,8 @@ function bindToPlayer(player) {
 Events.on(playbackManager, 'playerchange', function () {
     bindToPlayer(playbackManager.getCurrentPlayer());
 });
+
+Events.on(playbackManager, 'skip', (e, offsetTicks) => skipFlash?.show(offsetTicks));
 
 bindToPlayer(playbackManager.getCurrentPlayer());
 

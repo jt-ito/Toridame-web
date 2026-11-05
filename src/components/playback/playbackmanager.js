@@ -39,6 +39,12 @@ import * as bitrateTest from 'utils/bitrateTest';
 
 const UNLIMITED_ITEMS = -1;
 
+// How long skip presses are gathered into a single seek.
+const SEEK_COALESCE_MS = 250;
+
+// The server stops an idle transcode after about a minute, so a stream paused longer than this has to be started over.
+const STALE_TRANSCODE_PAUSE_MS = 45000;
+
 function enableLocalPlaylistManagement(player) {
     if (player.getPlaylist) {
         return false;
@@ -1669,17 +1675,51 @@ export class PlaybackManager {
                 return player.seek(ticks);
             }
 
+            // An explicit seek (such as dragging the slider) replaces any skip presses still waiting to be applied.
+            const playerData = getPlayerData(player);
+            clearTimeout(playerData.pendingSeekTimer);
+            playerData.pendingSeekTicks = null;
+
             changeStream(player, ticks);
         };
 
         self.seekRelative = function (offsetTicks, player) {
             player = player || self._currentPlayer;
+
+            // Lets the player UI show a skip indicator for every press, since the seek itself is applied later.
+            Events.trigger(self, 'skip', [offsetTicks]);
+
             if (player && !enableLocalPlaylistManagement(player) && player.seekRelative) {
-                return player.seekRelative(ticks);
+                return player.seekRelative(offsetTicks);
             }
 
-            const ticks = getCurrentTicks(player) + offsetTicks;
-            return this.seek(ticks, player);
+            // Rapid presses add up into one seek. Seeking past what is transcoded restarts ffmpeg on the server,
+            // and doing that once per press makes every later press wait behind the one before it.
+            const playerData = getPlayerData(player);
+            const streamInfo = playerData.streamInfo;
+            const baseTicks = playerData.pendingSeekTicks ?? getCurrentTicks(player);
+            playerData.pendingSeekTicks = Math.max(0, baseTicks + offsetTicks);
+
+            clearTimeout(playerData.pendingSeekTimer);
+            playerData.pendingSeekTimer = setTimeout(() => {
+                const targetTicks = playerData.pendingSeekTicks;
+                playerData.pendingSeekTicks = null;
+
+                // The item or stream changed while waiting, so the target no longer applies.
+                if (playerData.streamInfo === streamInfo) {
+                    self.seek(targetTicks, player);
+                }
+            }, SEEK_COALESCE_MS);
+        };
+
+        // Starts the current item's stream over at the current position, for a stream that stopped responding.
+        self.restartStream = function (player) {
+            player = player || self._currentPlayer;
+            if (!player || getPlayerData(player).isChangingStream) {
+                return;
+            }
+
+            changeStream(player, getCurrentTicks(player), {});
         };
 
         // Returns true if the player can seek using native client-side seeking functions
@@ -3863,6 +3903,20 @@ export class PlaybackManager {
         return this._playQueueManager.getNextItemInfo();
     }
 
+    /**
+     * Whether skipping to the next track would do anything.
+     * A player that keeps its own queue is always assumed to, since ours says nothing about it.
+     * @param {Object} [player] The player to ask about, defaulting to the current one.
+     * @returns {boolean} Whether there is a next item.
+     */
+    hasNextItem(player = this._currentPlayer) {
+        if (player && !enableLocalPlaylistManagement(player)) {
+            return true;
+        }
+
+        return !!this._playQueueManager.getNextItemInfo();
+    }
+
     nextItem(player = this._currentPlayer) {
         if (player && !enableLocalPlaylistManagement(player)) {
             return player.nextItem();
@@ -4112,8 +4166,27 @@ export class PlaybackManager {
     }
 
     unpause(player = this._currentPlayer) {
-        if (player) {
-            player.unpause();
+        if (!player) {
+            return;
+        }
+
+        const isLocal = enableLocalPlaylistManagement(player);
+
+        // After a long pause (typically the app sitting in the background) the server has dropped the transcode
+        // and the old stream can't be counted on, so start over from the same position.
+        if (isLocal && player.getPausedDuration?.() > STALE_TRANSCODE_PAUSE_MS && this.playMethod(player) === 'Transcode') {
+            console.debug('[playbackManager] stream was paused for a long time, restarting it');
+            this.restartStream(player);
+            return;
+        }
+
+        const result = player.unpause();
+
+        if (isLocal && result?.catch) {
+            result.catch((err) => {
+                console.error('[playbackManager] unable to resume playback, restarting the stream', err);
+                this.restartStream(player);
+            });
         }
     }
 

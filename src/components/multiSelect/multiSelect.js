@@ -248,6 +248,12 @@ function showMenuForSelectedItems(e) {
                 icon: 'check_box_outline_blank'
             });
 
+            menuItems.push({
+                name: globalize.translate('RemoveFromContinueWatching'),
+                id: 'removefromcontinuewatching',
+                icon: 'visibility_off'
+            });
+
             // this assures that if the user can refresh metadata for the first item
             // they can refresh metadata for all items
             if (itemHelper.canRefreshMetadata(firstItem, user)) {
@@ -327,6 +333,15 @@ function showMenuForSelectedItems(e) {
                                 });
                                 hideSelections();
                                 dispatchNeedsRefresh();
+                                break;
+                            case 'removefromcontinuewatching':
+                                Promise.all(items.map(itemId => apiClient.ajax({
+                                    type: 'POST',
+                                    url: apiClient.getUrl(`UserItems/${itemId}/UserData`, { userId: apiClient.getCurrentUserId() }),
+                                    data: JSON.stringify({ PlaybackPositionTicks: 0 }),
+                                    contentType: 'application/json'
+                                }))).finally(dispatchNeedsRefresh);
+                                hideSelections();
                                 break;
                             case 'refresh':
                                 import('../refreshdialog/refreshdialog').then(({ default: RefreshDialog }) => {

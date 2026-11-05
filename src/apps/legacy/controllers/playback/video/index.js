@@ -28,6 +28,8 @@ import 'elements/emby-ratingbutton/emby-ratingbutton';
 import 'styles/videoosd.scss';
 import shell from 'scripts/shell';
 import SubtitleSync from 'components/subtitlesync/subtitlesync';
+import showEpisodeList from 'components/episodeList/episodeList';
+import { getEpisodeListSettings, isEpisodeListEnabled, log as logEpisodeList } from 'components/episodeList/episodeListSettings';
 import { appRouter } from 'components/router/appRouter';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import LibraryMenu from 'scripts/libraryMenu';
@@ -35,7 +37,8 @@ import { setBackdropTransparency, TRANSPARENCY_LEVEL } from 'components/backdrop
 import { pluginManager } from 'components/pluginManager';
 
 function getOpenedDialog() {
-    return document.querySelector('.dialogContainer .dialog.opened');
+    // The episode list floats over the player instead of sitting in a dialog container.
+    return document.querySelector('.dialogContainer .dialog.opened, .episodeListDialog.opened');
 }
 
 export default function (view) {
@@ -516,6 +519,9 @@ export default function (view) {
             isEnabled = true;
             updatePlayerStateInternal(event, player, state);
             updatePlaylist();
+            view.querySelector('.btnEpisodeList').classList.toggle('hide', !isEpisodeListEnabled(state.NowPlayingItem.Type));
+            // With the plugin installed, one of the two buttons is hidden by CSS (see videoosd.scss).
+            view.querySelector('.osdControls').classList.toggle('episodeListPreferNative', getEpisodeListSettings().source === 'native');
             enableStopOnBack(true);
             updatePlaybackRate(player);
         }
@@ -922,7 +928,8 @@ export default function (view) {
                 btnPreviousTrack.classList.remove('hide');
                 btnNextTrack.classList.remove('hide');
                 btnPreviousTrack.disabled = false;
-                btnNextTrack.disabled = false;
+                // Grey out "next" on the last item (unless repeat-all/one gives it somewhere to go).
+                btnNextTrack.disabled = !playbackManager.getNextItem();
             }
         } catch (err) {
             console.error('[VideoPlayer] failed to get playlist', err);
@@ -1648,6 +1655,25 @@ export default function (view) {
     const endsAtText = view.querySelector('.endsAtText');
     const btnRewind = view.querySelector('.btnRewind');
     const btnFastForward = view.querySelector('.btnFastForward');
+
+    // Presses made while the indicator is still showing add up, matching the single seek they end up as.
+    const skipIndicator = view.querySelector('.osdSkipIndicator');
+    let skipIndicatorTimer;
+    let skipIndicatorTicks = 0;
+
+    function onSkip(e, offsetTicks) {
+        skipIndicatorTicks = skipIndicator.classList.contains('is-visible') ? skipIndicatorTicks + offsetTicks : offsetTicks;
+
+        const seconds = Math.round(Math.abs(skipIndicatorTicks) / TICKS_PER_SECOND);
+        const forward = skipIndicatorTicks >= 0;
+        skipIndicator.classList.toggle('is-forward', forward);
+        skipIndicator.classList.toggle('is-back', !forward);
+        skipIndicator.innerHTML = `<span class="material-icons" aria-hidden="true">${forward ? 'fast_forward' : 'fast_rewind'}</span>${forward ? '+' : '−'}${globalize.translate('ValueSeconds', seconds)}`;
+        skipIndicator.classList.add('is-visible');
+
+        clearTimeout(skipIndicatorTimer);
+        skipIndicatorTimer = setTimeout(() => skipIndicator.classList.remove('is-visible'), 1000);
+    }
     const transitionEndEventName = dom.whichTransitionEvent();
     const headerElement = document.querySelector('.skinHeader');
     const osdBottomElement = view.querySelector('.videoOsdBottom-maincontrols');
@@ -1668,6 +1694,7 @@ export default function (view) {
     view.addEventListener('viewshow', function () {
         try {
             Events.on(playbackManager, 'playerchange', onPlayerChange);
+            Events.on(playbackManager, 'skip', onSkip);
             bindToPlayer(playbackManager.getCurrentPlayer());
             /* eslint-disable-next-line compat/compat */
             dom.addEventListener(document, window.PointerEvent ? 'pointermove' : 'mousemove', onPointerMove, {
@@ -1760,6 +1787,9 @@ export default function (view) {
         });
         inputManager.off(window, onInputCommand);
         Events.off(playbackManager, 'playerchange', onPlayerChange);
+        Events.off(playbackManager, 'skip', onSkip);
+        clearTimeout(skipIndicatorTimer);
+        skipIndicator.classList.remove('is-visible');
         releaseCurrentPlayer();
     });
     view.querySelector('.btnFullscreen').addEventListener('click', function () {
@@ -1954,6 +1984,12 @@ export default function (view) {
     });
     btnFastForward.addEventListener('click', function () {
         playbackManager.fastForward(currentPlayer);
+    });
+    view.querySelector('.btnEpisodeList').addEventListener('click', function () {
+        showEpisodeList(currentItem, {
+            mediaSourceId: playbackManager.currentMediaSource(currentPlayer)?.Id,
+            getPositionTicks: () => playbackManager.currentTime(currentPlayer) * 10000
+        }).catch(err => logEpisodeList('error', 'failed to show the list', err));
     });
     view.querySelector('.btnAudio').addEventListener('click', showAudioTrackSelection);
     view.querySelector('.btnSubtitles').addEventListener('click', showSubtitleTrackSelection);

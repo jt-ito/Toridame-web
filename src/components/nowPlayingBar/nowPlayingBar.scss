@@ -125,6 +125,16 @@
     padding-left: 1.5em;
 }
 
+// Briefly shows how far a skip button moved playback, right beside the time.
+.nowPlayingBarSkipFlash {
+    display: inline-block;
+    min-width: 5.5em;
+    padding-left: 0.5em;
+    vertical-align: middle;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
 .nowPlayingBarVolumeSliderContainer {
     [dir="ltr"] & {
         margin-right: 2em;

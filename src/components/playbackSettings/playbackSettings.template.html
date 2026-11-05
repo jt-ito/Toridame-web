@@ -139,6 +139,124 @@
             <div class="fieldDescription checkboxFieldDescription">${EnableNextVideoInfoOverlayHelp}</div>
         </div>
 
+        <h2 class="sectionTitle">${WatchHistory}</h2>
+
+        <div class="checkboxContainer checkboxContainer-withDescription">
+            <label>
+                <input type="checkbox" is="emby-checkbox" class="chkDisableWatchHistory" />
+                <span>${DisableWatchHistory}</span>
+            </label>
+            <div class="fieldDescription checkboxFieldDescription">${DisableWatchHistoryHelp}</div>
+        </div>
+
+        <div class="verticalSection">
+            <button is="emby-button" type="button" class="raised btnClearContinueWatching">
+                <span>${ClearContinueWatching}</span>
+            </button>
+            <button is="emby-button" type="button" class="raised btnClearWatchHistory">
+                <span>${ClearWatchHistory}</span>
+            </button>
+        </div>
+
+        <h2 class="sectionTitle">${EpisodeListSettings}</h2>
+
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="enabled" />
+            <span>${EpisodeListEnable}</span>
+        </label>
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="enableEpisodes" />
+            <span>${EpisodeListEnableEpisodes}</span>
+        </label>
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="enableMovies" />
+            <span>${EpisodeListEnableMovies}</span>
+        </label>
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="enableVideos" />
+            <span>${EpisodeListEnableVideos}</span>
+        </label>
+
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="showDescription" />
+            <span>${EpisodeListShowDescription}</span>
+        </label>
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="showProgress" />
+            <span>${EpisodeListShowProgress}</span>
+        </label>
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="showMissing" />
+            <span>${EpisodeListShowMissing}</span>
+        </label>
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="searchCollections" />
+            <span>${EpisodeListSearchCollections}</span>
+        </label>
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="movieFolderSiblings" />
+            <span>${EpisodeListMovieFolderSiblings}</span>
+        </label>
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="additionalParts" />
+            <span>${EpisodeListAdditionalParts}</span>
+        </label>
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="alternateVersions" />
+            <span>${EpisodeListAlternateVersions}</span>
+        </label>
+
+        <div class="selectContainer">
+            <select is="emby-select" data-episodelist="watchCount" label="${EpisodeListWatchCount}">
+                <option value="count">${EpisodeListWatchCountItems}</option>
+                <option value="time">${EpisodeListWatchCountTime}</option>
+                <option value="off">${Off}</option>
+            </select>
+        </div>
+
+        <div class="selectContainer">
+            <select is="emby-select" data-episodelist="layout" label="${EpisodeListLayout}">
+                <option value="stacked">${EpisodeListLayoutStacked}</option>
+                <option value="sideBySide">${EpisodeListLayoutSideBySide}</option>
+            </select>
+        </div>
+
+        <div class="selectContainer">
+            <select is="emby-select" data-episodelist="blur" label="${EpisodeListBlur}">
+                <option value="none">${None}</option>
+                <option value="description">${EpisodeListBlurDescription}</option>
+                <option value="thumbnail">${EpisodeListBlurThumbnail}</option>
+                <option value="both">${EpisodeListBlurBoth}</option>
+            </select>
+        </div>
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="blurUnwatchedOnly" />
+            <span>${EpisodeListBlurUnwatchedOnly}</span>
+        </label>
+
+        <label class="checkboxContainer">
+            <input type="checkbox" is="emby-checkbox" data-episodelist="autoClose" />
+            <span>${EpisodeListAutoClose}</span>
+        </label>
+
+        <div class="selectContainer">
+            <select is="emby-select" data-episodelist="source" label="${EpisodeListSource}">
+                <option value="plugin">${EpisodeListSourcePlugin}</option>
+                <option value="native">${EpisodeListSourceNative}</option>
+            </select>
+            <div class="fieldDescription">${EpisodeListSourceHelp}</div>
+        </div>
+
+        <div class="selectContainer">
+            <select is="emby-select" data-episodelist="logLevel" label="${EpisodeListLogLevel}">
+                <option value="debug">${EpisodeListLogDebug}</option>
+                <option value="info">${EpisodeListLogInfo}</option>
+                <option value="warn">${EpisodeListLogWarning}</option>
+                <option value="error">${EpisodeListLogError}</option>
+                <option value="none">${None}</option>
+            </select>
+        </div>
+
         <div class="checkboxContainer fldExternalPlayer checkboxContainer-withDescription hide">
             <label>
                 <input type="checkbox" is="emby-checkbox" class="chkExternalVideoPlayer" />

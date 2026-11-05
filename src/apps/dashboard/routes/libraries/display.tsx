@@ -24,6 +24,12 @@ import type { MetadataConfiguration } from '@jellyfin/sdk/lib/generated-client/m
 
 const CONFIG_KEY = 'metadata';
 
+// Added by this fork, so the SDK's generated type does not know it.
+type ServerConfigurationWithSubtitleExtraction = {
+    ExtractSubtitlesAfterLibraryScan?: boolean;
+    WarnAboutTruncatedStreams?: boolean;
+};
+
 export const action = async ({ request }: ActionFunctionArgs) => {
     const api = ServerConnections.getApi();
     if (!api) throw new Error('No Api instance available');
@@ -42,6 +48,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     config.EnableGroupingMoviesIntoCollections = data.GroupMoviesIntoCollections?.toString() === 'on';
     config.EnableGroupingShowsIntoCollections = data.GroupShowsIntoCollections?.toString() === 'on';
     config.EnableExternalContentInSuggestions = data.EnableExternalContentInSuggestions?.toString() === 'on';
+    (config as ServerConfigurationWithSubtitleExtraction).ExtractSubtitlesAfterLibraryScan = data.ExtractSubtitlesAfterLibraryScan?.toString() === 'on';
+    (config as ServerConfigurationWithSubtitleExtraction).WarnAboutTruncatedStreams = data.WarnAboutTruncatedStreams?.toString() === 'on';
 
     await getSystemApi(api)
         .updateConfiguration({ serverConfiguration: config });
@@ -172,6 +180,32 @@ export const Component = () => {
                                     label={globalize.translate('OptionEnableExternalContentInSuggestions')}
                                 />
                                 <FormHelperText>{globalize.translate('OptionEnableExternalContentInSuggestionsHelp')}</FormHelperText>
+                            </FormControl>
+
+                            <FormControl>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            name={'ExtractSubtitlesAfterLibraryScan'}
+                                            defaultChecked={(config as ServerConfigurationWithSubtitleExtraction).ExtractSubtitlesAfterLibraryScan ?? false}
+                                        />
+                                    }
+                                    label={globalize.translate('LabelExtractSubtitlesAfterLibraryScan')}
+                                />
+                                <FormHelperText>{globalize.translate('LabelExtractSubtitlesAfterLibraryScanHelp')}</FormHelperText>
+                            </FormControl>
+
+                            <FormControl>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            name={'WarnAboutTruncatedStreams'}
+                                            defaultChecked={(config as ServerConfigurationWithSubtitleExtraction).WarnAboutTruncatedStreams ?? false}
+                                        />
+                                    }
+                                    label={globalize.translate('LabelWarnAboutTruncatedStreams')}
+                                />
+                                <FormHelperText>{globalize.translate('LabelWarnAboutTruncatedStreamsHelp')}</FormHelperText>
                             </FormControl>
 
                             <Button

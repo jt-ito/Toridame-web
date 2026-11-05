@@ -1,0 +1,273 @@
+// A panel that floats at the bottom right of the player, over the controls, instead of taking over the screen.
+.dialog.episodeListDialog {
+    position: fixed;
+    top: auto;
+    left: auto;
+    right: max(1.5vw, env(safe-area-inset-right));
+    bottom: max(1.5vh, env(safe-area-inset-bottom));
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    width: min(48vw, 58em);
+    max-height: 72vh;
+    border-radius: 0.9em;
+    overflow: hidden;
+    transform-origin: bottom right;
+    box-shadow: 0 0.6em 2em rgba(0, 0, 0, 0.55);
+
+    // A phone held sideways: still a panel in the corner, so the video stays visible beside it.
+    @media all and (max-height: 45em) {
+        width: min(54vw, 58em);
+        max-height: 82vh;
+        font-size: 0.9em;
+    }
+
+    // A phone held upright has no room beside the video, so the panel spans the width but only the lower part.
+    @media all and (max-width: 40em) {
+        width: 98vw;
+        max-height: 62vh;
+    }
+
+    // On a short screen only the list may shrink; the header and the chips keep their height.
+    .episodeListHeader,
+    .episodeListGroups,
+    .fldVersion {
+        flex: 0 0 auto;
+    }
+
+    .episodeListHeader {
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+        padding: 0.5em 1em 0.3em 0.5em;
+    }
+
+    .episodeListTitle {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        font-size: 1.35em;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .episodeListStats {
+        display: flex;
+        align-items: center;
+        gap: 0.35em;
+        font-size: 0.9em;
+        white-space: nowrap;
+        opacity: 0.75;
+
+        .material-icons {
+            font-size: 1.2em;
+        }
+    }
+
+    // Seasons, collections and the like, as chips that scroll sideways.
+    .episodeListGroups {
+        display: flex;
+        gap: 0.5em;
+        padding: 0.2em 1em 0.6em;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .episodeListChip {
+        flex: 0 0 auto;
+        padding: 0.3em 1em;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 2em;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        font-size: 0.9em;
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        &:focus-visible {
+            outline: 0.15em solid rgba(255, 255, 255, 0.8);
+            outline-offset: 0.1em;
+        }
+
+        &.is-selected {
+            border-color: transparent;
+            background: rgba(255, 255, 255, 0.22);
+            font-weight: 500;
+        }
+    }
+
+    .fldVersion {
+        margin: 0 1em 0.4em;
+    }
+
+    .episodeListScroller {
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 0 0.4em 0.6em;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+    }
+
+    .episodeListEmpty {
+        padding: 1em;
+        opacity: 0.7;
+    }
+
+    .episodeListRow {
+        border-radius: 0.6em;
+        margin: 0.1em 0;
+    }
+
+    .episodeListRowHeader {
+        display: flex;
+        align-items: center;
+        gap: 0.8em;
+        padding: 0.35em 0.5em 0.35em 0.8em;
+        border-radius: 0.6em;
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        // Visible from across a room when a remote moves the focus here.
+        &:focus-visible {
+            outline: 0.15em solid rgba(255, 255, 255, 0.8);
+            outline-offset: -0.15em;
+        }
+    }
+
+    .is-current > .episodeListRowHeader,
+    .is-expanded > .episodeListRowHeader {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .episodeListIndex {
+        min-width: 1.4em;
+        text-align: end;
+        opacity: 0.7;
+    }
+
+    .episodeListName {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .is-current .episodeListName {
+        font-weight: 500;
+    }
+
+    .is-played .episodeListName {
+        opacity: 0.65;
+    }
+
+    .episodeListActions {
+        display: flex;
+        align-items: center;
+        margin-inline-start: auto;
+
+        .paper-icon-button-light {
+            padding: 0.35em;
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+    }
+
+    // Under the title, lined up with it rather than with the index.
+    .episodeListPreview {
+        padding: 0 0.8em 0.8em 3.1em;
+    }
+
+    .episodeListMeta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1em;
+        margin: 0.1em 0 0.6em;
+        font-size: 0.85em;
+        opacity: 0.8;
+    }
+
+    .episodeListPreviewBody {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8em;
+    }
+
+    .episodeListPreviewImage {
+        width: 100%;
+        max-width: 22em;
+        aspect-ratio: 16 / 9;
+        border-radius: 0.5em;
+        background: rgba(255, 255, 255, 0.08);
+        object-fit: cover;
+    }
+
+    .episodeListOverview {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        line-height: 1.45;
+    }
+
+    // Description beside the picture instead of under it.
+    &--sideBySide .episodeListPreviewBody {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    &--sideBySide .episodeListPreviewImage {
+        flex: 0 0 38%;
+        width: 38%;
+    }
+
+    .episodeListProgress {
+        height: 3px;
+        margin: 0 0.8em 0.4em 3.1em;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.2);
+
+        > div {
+            height: 100%;
+            border-radius: 2px;
+            background: #00a4dc;
+        }
+    }
+
+    &--hideProgress .episodeListProgress {
+        display: none;
+    }
+
+    // Spoiler protection: blurred until hovered or focused.
+    &--blurDescription .episodeListRow[data-blur] .episodeListOverview,
+    &--blurThumbnail .episodeListRow[data-blur] .episodeListPreviewImage {
+        filter: blur(0.5em);
+        transition: filter 0.2s;
+    }
+
+    &--blurDescription .episodeListRow[data-blur] .episodeListPreviewBody:hover .episodeListOverview,
+    &--blurDescription .episodeListRow[data-blur] .episodeListPreviewBody:focus-within .episodeListOverview,
+    &--blurThumbnail .episodeListRow[data-blur] .episodeListPreviewBody:hover .episodeListPreviewImage,
+    &--blurThumbnail .episodeListRow[data-blur] .episodeListPreviewBody:focus-within .episodeListPreviewImage {
+        filter: none;
+    }
+}
+
+// The panel is not modal in spirit: the video behind it should stay visible. Clicking outside still closes it.
+.dialogBackdrop:has(+ .episodeListDialog) {
+    background-color: transparent;
+}

@@ -7,6 +7,8 @@ import { pluginManager } from 'components/pluginManager';
 import { AppFeature } from 'constants/appFeature';
 import { PluginType } from 'constants/pluginType';
 import { MILLISECONDS_PER_MINUTE } from 'constants/time';
+import { getEpisodeListSettings, setEpisodeListSetting } from 'components/episodeList/episodeListSettings';
+import confirm from 'components/confirm/confirm';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import { ID as STILL_WATCHING_ID, StillWatchingConfiguration, StillWatchingOptions } from 'plugins/stillWatching/constants';
 
@@ -261,6 +263,16 @@ function loadForm(context, user, userSettings, systemInfo, apiClient) {
     context.querySelector('#selectAudioNormalization').value = userSettings.selectAudioNormalization();
     context.querySelector('.fldAudioNormalization').classList.toggle('hide', !!browser.iOS);
     context.querySelector('.chkEnableNextVideoOverlay').checked = userSettings.enableNextVideoInfoOverlay();
+    const episodeListSettings = getEpisodeListSettings();
+    context.querySelectorAll('[data-episodelist]').forEach(control => {
+        const value = episodeListSettings[control.getAttribute('data-episodelist')];
+        if (control.type === 'checkbox') {
+            control.checked = value;
+        } else {
+            control.value = value;
+        }
+    });
+    context.querySelector('.chkDisableWatchHistory').checked = user.Configuration.DisableWatchHistory || false;
     context.querySelector('.chkRememberAudioSelections').checked = user.Configuration.RememberAudioSelections || false;
     context.querySelector('.chkRememberSubtitleSelections').checked = user.Configuration.RememberSubtitleSelections || false;
     context.querySelector('.chkExternalVideoPlayer').checked = appSettings.enableSystemExternalPlayers();
@@ -333,6 +345,10 @@ function saveUser(context, user, userSettingsInstance, apiClient) {
     userSettingsInstance.enableCinemaMode(context.querySelector('.chkEnableCinemaMode').checked);
     userSettingsInstance.selectAudioNormalization(context.querySelector('#selectAudioNormalization').value);
     userSettingsInstance.enableNextVideoInfoOverlay(context.querySelector('.chkEnableNextVideoOverlay').checked);
+    context.querySelectorAll('[data-episodelist]').forEach(control => {
+        setEpisodeListSetting(control.getAttribute('data-episodelist'), control.type === 'checkbox' ? control.checked : control.value);
+    });
+    user.Configuration.DisableWatchHistory = context.querySelector('.chkDisableWatchHistory').checked;
     user.Configuration.RememberAudioSelections = context.querySelector('.chkRememberAudioSelections').checked;
     user.Configuration.RememberSubtitleSelections = context.querySelector('.chkRememberSubtitleSelections').checked;
     user.Configuration.CastReceiverId = context.querySelector('.selectChromecastVersion').value;
@@ -364,6 +380,20 @@ function save(instance, context, userId, userSettings, apiClient, enableSaveConf
     });
 }
 
+function clearWatchHistory(apiClient, userId, continueWatchingOnly) {
+    confirm({
+        text: globalize.translate(continueWatchingOnly ? 'ClearContinueWatchingConfirm' : 'ClearWatchHistoryConfirm'),
+        confirmText: globalize.translate(continueWatchingOnly ? 'ClearContinueWatching' : 'ClearWatchHistory'),
+        primary: 'delete'
+    }).then(() => {
+        loading.show();
+        return apiClient.ajax({
+            type: 'DELETE',
+            url: apiClient.getUrl('UserItems/WatchHistory', { userId, continueWatchingOnly })
+        }).then(() => toast(globalize.translate('WatchHistoryCleared'))).finally(() => loading.hide());
+    }).catch(() => { /* cancelled */ });
+}
+
 function onSubmit(e) {
     const self = this;
     const apiClient = ServerConnections.getApiClient(self.options.serverId);
@@ -386,6 +416,12 @@ function embed(options, self) {
     options.element.innerHTML = globalize.translateHtml(template, 'core');
 
     options.element.querySelector('form').addEventListener('submit', onSubmit.bind(self));
+
+    const clearButton = (selector, continueWatchingOnly) => options.element.querySelector(selector).addEventListener('click', () => {
+        clearWatchHistory(ServerConnections.getApiClient(options.serverId), options.userId, continueWatchingOnly);
+    });
+    clearButton('.btnClearContinueWatching', true);
+    clearButton('.btnClearWatchHistory', false);
 
     if (options.enableSaveButton) {
         options.element.querySelector('.btnSave').classList.remove('hide');

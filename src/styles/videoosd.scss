@@ -1,10 +1,16 @@
 @use "mixins" as *;
 
+// The header it sits in (.skinHeader) already pads itself by the safe area, so adding it again as a margin here
+// pushed the back button far in from the edge on phones with a notch.
 .videoOsd-appBar {
-    margin-left: env(safe-area-inset-left);
-    margin-right: env(safe-area-inset-right);
     padding-left: 1em;
     padding-right: 1em;
+}
+
+// The toolbar wraps its children on narrow screens, which put a long title on its own line below the back button.
+// More specific than the toolbar's own responsive rule so it always wins.
+.osdHeader .videoOsd-appBar {
+    flex-wrap: nowrap;
 }
 
 .chapterThumbTextContainer,
@@ -54,8 +60,28 @@
     max-height: 3.5em;
 }
 
+// Keep long titles on one line next to the back button, truncated with an ellipsis.
+.osdHeader .pageTitle {
+    display: block;
+    min-width: 0;
+    line-height: 1.7em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .osdHeader .headerButton:not(.headerBackButton):not(.headerCastButton):not(.headerSyncButton) {
     display: none;
+}
+
+// The built-in episode list and the InPlayerEpisodePreview plugin (which adds #popupPreviewButton) do the same job,
+// so only one of the two buttons is shown. The plugin keeps its button unless the user picked the built-in list.
+.osdControls:not(.episodeListPreferNative):has(#popupPreviewButton) .btnEpisodeList {
+    display: none !important;
+}
+
+.osdControls.episodeListPreferNative #popupPreviewButton {
+    display: none !important;
 }
 
 .chapterThumbContainer {
@@ -117,6 +143,39 @@
 
 .videoOsdBottom-hidden {
     opacity: 0;
+}
+
+// Shown on the side of the screen the skip points to, for each press of a skip button.
+.osdSkipIndicator {
+    position: fixed;
+    top: 50%;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.6em 1.1em;
+    border-radius: 2em;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    font-size: 1.4em;
+    font-weight: 500;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-50%) scale(0.9);
+    transition: opacity 0.15s, transform 0.15s;
+
+    &.is-forward {
+        right: max(8vw, env(safe-area-inset-right));
+    }
+
+    &.is-back {
+        left: max(8vw, env(safe-area-inset-left));
+    }
+
+    &.is-visible {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+    }
 }
 
 .osdControls {

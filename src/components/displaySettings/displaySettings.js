@@ -123,6 +123,8 @@ function loadForm(context, user, userSettings) {
 
     context.querySelector('.chkDisplayMissingEpisodes').checked = user.Configuration.DisplayMissingEpisodes || false;
 
+    context.querySelector('#chkSyncAcrossDevices').checked = userSettings.syncAcrossDevices();
+
     context.querySelector('#chkThemeSong').checked = userSettings.enableThemeSongs();
     context.querySelector('#chkThemeVideo').checked = userSettings.enableThemeVideos();
     context.querySelector('#chkFadein').checked = userSettings.enableFastFadein();
@@ -151,6 +153,9 @@ function loadForm(context, user, userSettings) {
 
 function saveUser(context, user, userSettingsInstance, apiClient) {
     user.Configuration.DisplayMissingEpisodes = context.querySelector('.chkDisplayMissingEpisodes').checked;
+
+    // First, so the settings saved below already go to the account when it is turned on.
+    userSettingsInstance.syncAcrossDevices(context.querySelector('#chkSyncAcrossDevices').checked);
 
     if (appHost.supports(AppFeature.DisplayLanguage)) {
         userSettingsInstance.language(context.querySelector('#selectLanguage').value);

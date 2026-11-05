@@ -72,7 +72,7 @@ const VideoPage: FC = () => {
                         }
                         className='videoOsd-appBar'
                     >
-                        <Typography>{videoTitle}</Typography>
+                        <Typography noWrap>{videoTitle}</Typography>
                     </AppToolbar>
                 </Box>
             </Fade>

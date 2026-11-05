@@ -350,7 +350,31 @@ function getPerLibrarySettingsHtml(item, user, userSettings) {
 
     let isChecked;
 
-    if (item.Type === 'Channel' || collectionType === 'boxsets' || collectionType === 'playlists') {
+    const hasMyMediaCheckbox = item.Type === 'Channel' || collectionType === 'boxsets' || collectionType === 'playlists';
+    const excludeFromLatest = ['playlists', 'livetv', 'boxsets', 'channels'];
+    const hasLatestCheckbox = !excludeFromLatest.includes(collectionType || '');
+
+    // Libraries can be left off the home screen's library row without leaving the navigation menu.
+    // Those with a My Media option already have their own way of hiding the row entry, which also hides the menu entry.
+    const hasTileCheckbox = !hasMyMediaCheckbox;
+    const showTile = !userSettings.homeHiddenLibraries().includes(item.Id);
+    const showInLatest = !user.Configuration.LatestItemsExcludes.includes(item.Id);
+
+    if (hasTileCheckbox && hasLatestCheckbox) {
+        html += '<label>';
+        html += `<input type="checkbox" is="emby-checkbox" class="chkShowOnHome" data-folderid="${item.Id}"${showTile && showInLatest ? ' checked="checked"' : ''}/>`;
+        html += `<span>${globalize.translate('DisplayOnHomeScreen')}</span>`;
+        html += '</label>';
+    }
+
+    if (hasTileCheckbox) {
+        html += '<label>';
+        html += `<input type="checkbox" is="emby-checkbox" class="chkShowInHomeTiles" data-folderid="${item.Id}"${showTile ? ' checked="checked"' : ''}/>`;
+        html += `<span>${globalize.translate('DisplayInLibraryRow')}</span>`;
+        html += '</label>';
+    }
+
+    if (hasMyMediaCheckbox) {
         isChecked = !(user.Configuration.MyMediaExcludes || []).includes(item.Id);
         html += '<div>';
         html += '<label>';
@@ -360,11 +384,9 @@ function getPerLibrarySettingsHtml(item, user, userSettings) {
         html += '</div>';
     }
 
-    const excludeFromLatest = ['playlists', 'livetv', 'boxsets', 'channels'];
-    if (!excludeFromLatest.includes(collectionType || '')) {
-        isChecked = !user.Configuration.LatestItemsExcludes.includes(item.Id);
+    if (hasLatestCheckbox) {
         html += '<label class="fldIncludeInLatest">';
-        html += `<input type="checkbox" is="emby-checkbox" class="chkIncludeInLatest" data-folderid="${item.Id}"${isChecked ? ' checked="checked"' : ''}/>`;
+        html += `<input type="checkbox" is="emby-checkbox" class="chkIncludeInLatest" data-folderid="${item.Id}"${showInLatest ? ' checked="checked"' : ''}/>`;
         html += `<span>${globalize.translate('DisplayInOtherHomeScreenSections')}</span>`;
         html += '</label>';
     }
@@ -491,6 +513,10 @@ async function saveUser(context, user, userSettingsInstance, apiClient) {
         return i.getAttribute('data-folderid');
     });
 
+    userSettingsInstance.homeHiddenLibraries(getCheckboxItems('.chkShowInHomeTiles', context, false).map(i => {
+        return i.getAttribute('data-folderid');
+    }));
+
     user.Configuration.GroupedFolders = getCheckboxItems('.chkGroupFolder', context, true).map(i => {
         return i.getAttribute('data-folderid');
     });
@@ -567,12 +593,27 @@ function onSubmit(e) {
 }
 
 function onChange(e) {
+    const section = dom.parentWithClass(e.target, 'verticalSection');
+
+    // The overall switch drives the two options under it, and follows them when they are changed by hand.
+    const chkShowOnHome = section?.querySelector('.chkShowOnHome');
+    if (chkShowOnHome) {
+        const chkShowInHomeTiles = section.querySelector('.chkShowInHomeTiles');
+        const chkIncludeInLatest = section.querySelector('.chkIncludeInLatest');
+
+        if (e.target === chkShowOnHome) {
+            chkShowInHomeTiles.checked = chkShowOnHome.checked;
+            chkIncludeInLatest.checked = chkShowOnHome.checked;
+        } else if (e.target === chkShowInHomeTiles || e.target === chkIncludeInLatest) {
+            chkShowOnHome.checked = chkShowInHomeTiles.checked && chkIncludeInLatest.checked;
+        }
+    }
+
     const chkIncludeInMyMedia = dom.parentWithClass(e.target, 'chkIncludeInMyMedia');
     if (!chkIncludeInMyMedia) {
         return;
     }
 
-    const section = dom.parentWithClass(chkIncludeInMyMedia, 'verticalSection');
     const fldIncludeInLatest = section.querySelector('.fldIncludeInLatest');
     if (fldIncludeInLatest) {
         if (chkIncludeInMyMedia.checked) {

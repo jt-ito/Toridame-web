@@ -142,6 +142,10 @@ function loadSection(page, apiClient, user, userSettings, userViews, section, in
     const elem = page.querySelector('.section' + index);
     const options = { enableOverflow: enableScrollX() };
 
+    // TV has no navigation menu to reach a library from, so its tiles are never left out.
+    const hiddenLibraries = layoutManager.tv ? [] : userSettings.homeHiddenLibraries();
+    const tileViews = userViews.filter(view => !hiddenLibraries.includes(view.Id));
+
     switch (section) {
         case HomeSectionType.ActiveRecordings:
             loadRecordings(elem, true, apiClient, options);
@@ -150,7 +154,7 @@ function loadSection(page, apiClient, user, userSettings, userViews, section, in
             loadRecentlyAdded(elem, apiClient, user, userViews, options);
             break;
         case HomeSectionType.LibraryButtons:
-            loadLibraryButtons(elem, userViews);
+            loadLibraryButtons(elem, tileViews);
             break;
         case HomeSectionType.LiveTv:
             return loadLiveTV(elem, apiClient, user, options);
@@ -167,7 +171,7 @@ function loadSection(page, apiClient, user, userSettings, userViews, section, in
             loadResume(elem, apiClient, 'HeaderContinueReading', 'Book', userSettings, options);
             break;
         case HomeSectionType.SmallLibraryTiles:
-            loadLibraryTiles(elem, userViews, options);
+            loadLibraryTiles(elem, tileViews, options);
             break;
         default:
             elem.innerHTML = '';

@@ -345,6 +345,11 @@ export class HtmlVideoPlayer {
      * @type {number | null | undefined}
      */
     #currentTime;
+    /**
+     * When the media element last paused, or null while it plays.
+     * @type {number | null | undefined}
+     */
+    #pausedAt;
 
     /**
      * @private (used in other files)
@@ -504,6 +509,7 @@ export class HtmlVideoPlayer {
         this.#timeUpdated = false;
 
         this.#currentTime = null;
+        this.#pausedAt = null;
 
         if (options.resetSubtitleOffset !== false) this.resetSubtitleOffset();
 
@@ -1139,6 +1145,7 @@ export class HtmlVideoPlayer {
      * @private
      */
     onPlay = () => {
+        this.#pausedAt = null;
         Events.trigger(this, 'unpause');
     };
 
@@ -1179,6 +1186,7 @@ export class HtmlVideoPlayer {
      * @private
      */
     onPause = () => {
+        this.#pausedAt = Date.now();
         Events.trigger(this, 'pause');
     };
 
@@ -1983,7 +1991,6 @@ export class HtmlVideoPlayer {
         return this.#supportedFeatures.includes(feature);
     }
 
-    // Save this for when playback stops, because querying the time at that point might return 0
     currentTime(val) {
         const mediaElement = this.#mediaElement;
         if (mediaElement) {
@@ -1992,13 +1999,28 @@ export class HtmlVideoPlayer {
                 return;
             }
 
+            // The saved time only moves on timeupdate, so it is stale while seeking or when the page was in the
+            // background. Prefer the element, which already reports the seek target.
+            if (mediaElement.currentTime) {
+                return mediaElement.currentTime * 1000;
+            }
+
+            // Saved for when playback stops, because querying the element at that point might return 0
             const currentTime = this.#currentTime;
             if (currentTime) {
                 return currentTime * 1000;
             }
 
-            return (mediaElement.currentTime || 0) * 1000;
+            return 0;
         }
+    }
+
+    /**
+     * How long the player has been paused.
+     * @returns {number} Milliseconds, or 0 while playing.
+     */
+    getPausedDuration() {
+        return this.#pausedAt ? Date.now() - this.#pausedAt : 0;
     }
 
     duration() {
@@ -2155,7 +2177,16 @@ export class HtmlVideoPlayer {
     unpause() {
         const mediaElement = this.#mediaElement;
         if (mediaElement) {
-            mediaElement.play();
+            const result = mediaElement.play();
+
+            // Report a play() that fails so the caller can recover; these two just mean it was interrupted or needs a tap.
+            return result?.catch?.((err) => {
+                if (err?.name === 'AbortError' || err?.name === 'NotAllowedError') {
+                    return;
+                }
+
+                throw err;
+            });
         }
     }
 

@@ -21,6 +21,8 @@ import { findBestConfigurationPage } from 'apps/dashboard/features/plugins/api/c
 import { findBestPluginInfo } from 'apps/dashboard/features/plugins/api/pluginInfo';
 import { useConfigurationPages } from 'apps/dashboard/features/plugins/api/useConfigurationPages';
 import { useDisablePlugin } from 'apps/dashboard/features/plugins/api/useDisablePlugin';
+import BuiltInFeatureNotice from 'apps/dashboard/features/plugins/components/BuiltInFeatureNotice';
+import { isBuiltInFeature } from 'apps/dashboard/features/plugins/utils/builtInFeature';
 import { useEnablePlugin } from 'apps/dashboard/features/plugins/api/useEnablePlugin';
 import { useInstallPackage } from 'apps/dashboard/features/plugins/api/useInstallPackage';
 import { usePackageInfo } from 'apps/dashboard/features/plugins/api/usePackageInfo';
@@ -324,6 +326,8 @@ const PluginPage: FC = () => {
                         {globalize.translate(messageKey)}
                     </Alert>
                 ))}
+
+                {isBuiltInFeature(pluginDetails?.id) && <BuiltInFeatureNotice />}
 
                 <Grid container spacing={2} sx={{ marginTop: 0 }}>
                     <Grid item xs={12} lg={8}>

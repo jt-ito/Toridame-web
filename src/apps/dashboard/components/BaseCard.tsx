@@ -14,6 +14,8 @@ import { Link, To } from 'react-router-dom';
 interface BaseCardProps {
     title?: string;
     text?: string;
+    /** Small label shown under the text, e.g. a Chip. */
+    badge?: React.ReactNode;
     image?: string | null;
     icon?: React.ReactNode;
     to?: To;
@@ -28,6 +30,7 @@ interface BaseCardProps {
 const BaseCard = ({
     title,
     text,
+    badge,
     image,
     icon,
     to,
@@ -104,6 +107,7 @@ const BaseCard = ({
                                 {text}
                             </Typography>
                         )}
+                        {badge}
                     </Stack>
                     <Box>
                         {action ? (

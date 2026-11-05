@@ -10,6 +10,7 @@ import { clearBackdrop, setBackdrops } from '../backdrop/backdrop';
 import listView from '../listview/listview';
 import imageLoader from '../images/imageLoader';
 import { playbackManager } from '../playback/playbackmanager';
+import { createSkipFlash } from '../playback/skipFlash';
 import Events from '../../utils/events.ts';
 import { appHost } from '../apphost';
 import globalize from '../../lib/globalize';
@@ -244,6 +245,10 @@ export default function () {
         }
     }
 
+    function updateNextTrackState(context, player) {
+        context.querySelector('.btnNextTrack').disabled = !playbackManager.hasNextItem(player);
+    }
+
     function updatePlayerState(player, context, state) {
         lastPlayerState = state;
         const item = state.NowPlayingItem;
@@ -283,6 +288,7 @@ export default function () {
         buttonVisible(context.querySelector('.btnLyrics'), item?.Type === 'Audio' && !layoutManager.mobile);
         buttonVisible(context.querySelector('.btnStop'), item != null);
         buttonVisible(context.querySelector('.btnNextTrack'), item != null);
+        updateNextTrackState(context, player);
         buttonVisible(context.querySelector('.btnPreviousTrack'), item != null);
         if (layoutManager.mobile) {
             const playingVideo = playbackManager.isPlayingVideo() && item !== null;
@@ -512,6 +518,7 @@ export default function () {
 
     function onRepeatModeChange() {
         updateRepeatModeDisplay(playbackManager.getRepeatMode());
+        updateNextTrackState(dlg, this);
     }
 
     function onShuffleQueueModeChange(updateView = true) {
@@ -539,6 +546,7 @@ export default function () {
 
     function onPlaylistUpdate() {
         loadPlaylist(dlg, this);
+        updateNextTrackState(dlg, this);
     }
 
     function onPlaylistItemRemoved(e, info) {
@@ -553,6 +561,8 @@ export default function () {
                     listItem.parentNode.removeChild(listItem);
                 }
             }
+
+            updateNextTrackState(context, this);
         } else {
             onPlaylistUpdate();
         }
@@ -903,9 +913,15 @@ export default function () {
         }
     }
 
+    function onSkip(e, offsetTicks) {
+        skipFlash?.show(offsetTicks);
+    }
+
     function onDialogClosed() {
         releaseCurrentPlayer();
         Events.off(playbackManager, 'playerchange', onPlayerChange);
+        Events.off(playbackManager, 'skip', onSkip);
+        skipFlash?.hide();
         lastPlayerState = null;
     }
 
@@ -913,9 +929,23 @@ export default function () {
         // Subscribe here, not in init(): init runs once per node but hide/show repeat.
         Events.off(playbackManager, 'playerchange', onPlayerChange);
         Events.on(playbackManager, 'playerchange', onPlayerChange);
+
+        // Beside the position text, so a skip is acknowledged without covering anything.
+        const positionTime = context.querySelector('.positionTime');
+        if (positionTime && !context.querySelector('.skipFlash')) {
+            const flashElement = document.createElement('div');
+            flashElement.className = 'skipFlash';
+            flashElement.style.cssText = 'min-width:5.5em;margin-inline-start:0.5em;font-weight:500;white-space:nowrap';
+            positionTime.after(flashElement);
+            skipFlash = createSkipFlash(flashElement);
+        }
+        Events.off(playbackManager, 'skip', onSkip);
+        Events.on(playbackManager, 'skip', onSkip);
+
         bindToPlayer(context, playbackManager.getCurrentPlayer());
     }
 
+    let skipFlash;
     let dlg;
     let currentPlayer;
     let lastPlayerState;
