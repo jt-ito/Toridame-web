@@ -124,8 +124,8 @@ export default function (view, params) {
 
                 case ConnectionState.ServerUpdateNeeded:
                     alertTextWithOptions({
-                        text: globalize.translate('core#ServerUpdateNeeded', 'https://github.com/jellyfin/jellyfin'),
-                        html: globalize.translate('core#ServerUpdateNeeded', '<a href="https://github.com/jellyfin/jellyfin">https://github.com/jellyfin/jellyfin</a>')
+                        text: globalize.translate('core#ServerUpdateNeeded', 'https://github.com/jt-ito/Toridame'),
+                        html: globalize.translate('core#ServerUpdateNeeded', '<a href="https://github.com/jt-ito/Toridame">https://github.com/jt-ito/Toridame</a>')
                     });
                     break;
 

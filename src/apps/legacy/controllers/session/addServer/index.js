@@ -27,7 +27,7 @@ function handleConnectionResult(page, result) {
             break;
         case ConnectionState.ServerUpdateNeeded:
             Dashboard.alert({
-                message: globalize.translate('ServerUpdateNeeded', '<a href="https://github.com/jellyfin/jellyfin">https://github.com/jellyfin/jellyfin</a>')
+                message: globalize.translate('ServerUpdateNeeded', '<a href="https://github.com/jt-ito/Toridame">https://github.com/jt-ito/Toridame</a>')
             });
             break;
         case ConnectionState.Unavailable:

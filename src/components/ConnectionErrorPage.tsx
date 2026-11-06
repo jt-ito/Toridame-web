@@ -46,7 +46,7 @@ const ConnectionErrorPage: FC<ConnectionErrorPageProps> = ({
                 setTitle(globalize.translate('HeaderUpdateRequired'));
                 setHtmlMessage(globalize.translate(
                     'ServerUpdateNeeded',
-                    '<a href="https://jellyfin.org/downloads/server/">jellyfin.org/downloads/server</a>'
+                    '<a href="https://github.com/jt-ito/Toridame/releases">github.com/jt-ito/Toridame/releases</a>'
                 ));
                 setMessage(undefined);
                 return;

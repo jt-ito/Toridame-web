@@ -1,32 +1,34 @@
 {
-    "name": "Jellyfin",
-    "description": "The Free Software Media System",
+    "name": "Toridame",
+    "description": "Personal media server",
     "lang": "en-US",
-    "short_name": "Jellyfin",
+    "short_name": "Toridame",
     "start_url": "index.html#/home",
     "theme_color": "#101010",
     "background_color": "#101010",
     "display": "standalone",
     "icons": [
         {
-            "sizes": "72x72",
-            "src": "favicons/touchicon72.png",
-            "type": "image/png"
-        },
-        {
-            "sizes": "114x114",
-            "src": "favicons/touchicon114.png",
-            "type": "image/png"
-        },
-        {
-            "sizes": "144x144",
-            "src": "favicons/touchicon144.png",
+            "sizes": "192x192",
+            "src": "assets/toridame/icon-192.png",
             "type": "image/png"
         },
         {
             "sizes": "512x512",
-            "src": "favicons/touchicon512.png",
+            "src": "assets/toridame/icon-512.png",
             "type": "image/png"
+        },
+        {
+            "sizes": "192x192",
+            "src": "assets/toridame/icon-maskable-192.png",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "sizes": "512x512",
+            "src": "assets/toridame/icon-maskable-512.png",
+            "type": "image/png",
+            "purpose": "maskable"
         }
     ]
 }

@@ -26,7 +26,7 @@ const DrawerHeaderLink = () => {
                 />
             </ListItemIcon>
             <ListItemText
-                primary={systemInfo?.ServerName || 'Jellyfin'}
+                primary={systemInfo?.ServerName || 'Toridame'}
                 secondary={hasUpdate ?
                     globalize.translate('UpdateAvailableVersion', latestRelease?.version) :
                     getDisplayVersion(systemInfo?.Version)}

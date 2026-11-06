@@ -49,7 +49,7 @@ export function LocalizationPreferences({ onChange, values }: Readonly<Localizat
                         <span>{globalize.translate('LabelDisplayLanguageHelp')}</span>
                         { appHost.supports(AppFeature.ExternalLinks) && (
                             <Link
-                                href='https://github.com/jellyfin/jellyfin'
+                                href='https://github.com/jt-ito/Toridame'
                                 rel='noopener noreferrer'
                                 target='_blank'
                             >

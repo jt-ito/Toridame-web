@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useApi } from './useApi';
 
-const LATEST_RELEASE_URL = 'https://api.github.com/repos/jellyfin/jellyfin/releases/latest';
+const LATEST_RELEASE_URL = 'https://api.github.com/repos/jt-ito/Toridame/releases/latest';
 
 const parse = (version?: string | null) => (version ?? '').replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
 
@@ -18,7 +18,7 @@ export const isNewerVersion = (latest?: string | null, current?: string | null) 
 };
 
 /**
- * Latest upstream release, fetched from GitHub by the browser. Admins only, since only they can act on it.
+ * Latest Toridame release, fetched from GitHub by the browser. Admins only, since only they can act on it.
  * Fails quietly (no result) if GitHub is unreachable.
  */
 export const useLatestRelease = () => {
@@ -31,7 +31,7 @@ export const useLatestRelease = () => {
             if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
             const { tag_name: tag, html_url: url } = await response.json();
             // Only ever hand back a link to the project itself, whatever the response says.
-            const safeUrl = String(url).startsWith('https://github.com/jellyfin/') ? String(url) : undefined;
+            const safeUrl = String(url).startsWith('https://github.com/jt-ito/') ? String(url) : undefined;
             return { version: String(tag).replace(/^v/i, ''), url: safeUrl };
         },
         enabled: !!user?.Policy?.IsAdministrator,
